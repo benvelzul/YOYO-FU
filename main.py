@@ -62,9 +62,16 @@ class Player:
         self.vx = max(-self.max_speed, min(self.vx, self.max_speed))
         self.vy = max(-self.max_speed, min(self.vy, self.max_speed))
 
-        # Integrate position
+        # Integrate position axis-by-axis for better collision response
         self.x += self.vx * dt
+        if obstacles.check_collision(self):
+            self.x -= self.vx * dt
+            self.vx = 0.0
+
         self.y += self.vy * dt
+        if obstacles.check_collision(self):
+            self.y -= self.vy * dt
+            self.vy = 0.0
 
         # Keep inside bounds
         self.x = max(SIZE//2, min(self.x, WIDTH - SIZE//2))
@@ -109,6 +116,13 @@ class Obstacles:
             self.add_obstacle(x, y, w, h)
             placed += 1
             
+    def check_collision(self, player):
+        player_rect = pygame.Rect(int(player.x - SIZE//2), int(player.y - SIZE//2), SIZE, SIZE)
+        for obs in self.obstacles:
+            if player_rect.colliderect(obs):
+                return True
+        return False
+    
     def draw(self, surface):
         for obs in self.obstacles:
             pygame.draw.rect(surface, GREEN, obs)
@@ -141,6 +155,28 @@ obstacles = Obstacles()
 obstacles.make_map(10)
 
 DEADZONE = 0.15
+
+# Optional mapping for common controller buttons
+JOYSTICK_BUTTON_NAMES = {
+    0: "A",
+    1: "B",
+    2: "X",
+    3: "Y",
+    4: "MINUS",
+    5: "Home",
+    6: "PLUS",
+    7: "LeftStickPress",
+    8: "RightStickPress",
+    9: "LeftBumper",
+    10: "RightBumper",
+    11: "ArrowUp",
+    12: "ArrowDown",
+    13: "ArrowLeft",
+    14: "ArrowRight",
+    15: "ScreenShot",
+
+}
+
 while running:
     dt = clock.tick(FPS) / 1000.0
 
@@ -150,6 +186,16 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.KEYDOWN:
+            print(f"Key pressed: {pygame.key.name(event.key)} ({event.key})")
+        elif event.type == pygame.JOYBUTTONDOWN:
+            button_name = JOYSTICK_BUTTON_NAMES.get(event.button, f"Button {event.button}")
+            print(f"Joystick {event.joy} button pressed: {event.button} ({button_name})")
+        elif event.type == pygame.JOYBUTTONUP:
+            button_name = JOYSTICK_BUTTON_NAMES.get(event.button, f"Button {event.button}")
+            print(f"Joystick {event.joy} button released: {event.button} ({button_name})")
+        elif event.type == pygame.JOYHATMOTION:
+            print(f"Joystick {event.joy} hat {event.hat} moved: {event.value}")
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_w] or keys[pygame.K_UP]:
