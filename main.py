@@ -76,16 +76,38 @@ class Obstacles:
     
     def add_obstacle(self, x, y, width, height):
         self.obstacles.append(pygame.Rect(x, y, width, height))
+    def rect_circle_overlap(self, rect, center, radius):
+        cx, cy = center
+        # Find closest point on rect to circle center
+        closest_x = max(rect.left, min(cx, rect.right))
+        closest_y = max(rect.top, min(cy, rect.bottom))
+        dx = cx - closest_x
+        dy = cy - closest_y
+        return (dx * dx + dy * dy) <= (radius * radius)
 
     def make_map(self, num_obs):
-        for i in range(num_obs):
+        spawn_cx = WIDTH // 2
+        spawn_cy = HEIGHT // 2
+        spawn_radius = 120  # radius around center where obstacles won't spawn
+
+        placed = 0
+        attempts = 0
+        max_attempts = num_obs * 10
+        while placed < num_obs and attempts < max_attempts:
+            attempts += 1
             w = random.randint(50, 150)
             h = random.randint(50, 150)
             x = random.randint(0, WIDTH - w)
             y = random.randint(0, HEIGHT - h)
-            if x < WIDTH//2 - 100 and y < HEIGHT//2 - 100:
-                continue  # Don't place obstacles too close to the center spawn area
+            candidate = pygame.Rect(x, y, w, h)
+
+            # Skip obstacles that overlap the spawn circle
+            if self.rect_circle_overlap(candidate, (spawn_cx, spawn_cy), spawn_radius):
+                continue
+
+            # Otherwise place it
             self.add_obstacle(x, y, w, h)
+            placed += 1
             
     def draw(self, surface):
         for obs in self.obstacles:
