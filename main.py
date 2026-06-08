@@ -1,3 +1,4 @@
+import os
 import pygame
 import random 
 
@@ -5,9 +6,29 @@ pygame.init()
 HEIGHT = 600
 WIDTH = 800
 SIZE = 30
+ASSET_DIR = os.path.join(os.path.dirname(__file__), "Images")
+
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("YOYO-FU V1.0")
 running = True
+
+def load_image(name):
+    path = os.path.join(ASSET_DIR, name)
+    try:
+        return pygame.image.load(path).convert_alpha()
+    except pygame.error as exc:
+        print(f"Unable to load image: {path}")
+        raise exc
+
+# Use only cactus_1 for all obstacle rendering.
+cactus_image = load_image("Cactus_YF1.png")
+# Animate the yoyo using the two frame images.
+yoyo_frames = [
+    pygame.transform.smoothscale(load_image("yoyo_YF0.png"), (SIZE//2, SIZE//2)),
+    pygame.transform.smoothscale(load_image("yoyo_YF1.png"), (SIZE//2, SIZE//2)),
+]
+# Player sprite (scaled to SIZE)
+player_image = pygame.transform.smoothscale(cactus_image, (SIZE, SIZE))
 
 # Colors
 WHITE = (255, 255, 255)
@@ -141,6 +162,9 @@ class Yoyo:
         self.state = "attached"
         self.max_range = 280
         self.travel_distance = 0.0
+        self.animation_timer = 0.0
+        self.animation_frame = 0
+        self.animation_speed = 0.15
 
     def attach(self):
         self.state = "attached"
@@ -235,10 +259,17 @@ class Yoyo:
         self.x = max(0, min(self.x, WIDTH))
         self.y = max(0, min(self.y, HEIGHT))
 
+        self.animation_timer += dt
+        if self.animation_timer >= self.animation_speed:
+            self.animation_timer -= self.animation_speed
+            self.animation_frame = (self.animation_frame + 1) % len(yoyo_frames)
+
     def draw(self, surface):
         if self.state != "attached":
             pygame.draw.line(surface, WHITE, (int(self.owner.x), int(self.owner.y)), (int(self.x), int(self.y)), 2)
-        pygame.draw.circle(surface, RED, (int(self.x), int(self.y)), 10)
+        frame = yoyo_frames[self.animation_frame]
+        frame_rect = frame.get_rect(center=(int(self.x), int(self.y)))
+        surface.blit(frame, frame_rect)
 
 class Controls:
     DEADZONE = 0.15
@@ -336,8 +367,8 @@ class Controls:
     def aim_vector(self, owner_x, owner_y):
         if self.joystick is not None:
             try:
-                aim_x = self.joystick.get_axis(2)
-                aim_y = self.joystick.get_axis(3)
+                aim_x = self.joystick.get_axis(0)
+                aim_y = self.joystick.get_axis(1)
                 aim_x = self._deadzone(aim_x)
                 aim_y = self._deadzone(aim_y)
                 if aim_x != 0.0 or aim_y != 0.0:
@@ -440,7 +471,9 @@ while running:
 
     screen.fill(BLACK)
     obstacles.draw(screen)
-    pygame.draw.circle(screen, BLUE, (int(player.x), int(player.y)), SIZE // 2)
+    # Draw player as cactus sprite
+    player_rect = player_image.get_rect(center=(int(player.x), int(player.y)))
+    screen.blit(player_image, player_rect)
 
     if controls.wants_preview() and yoyo.state == "attached":
         preview_x, preview_y = controls.aim_point(player.x, player.y, 40)
