@@ -1,0 +1,11 @@
+[gd_scene format=3 uid="uid://dh5gbdmewfyut"]
+
+[ext_resource type="Script" uid="uid://dvdmxjxljrn54" path="res://yoyo_equipped.gd" id="1_usw18"]
+[ext_resource type="PackedScene" uid="uid://c5kco8gqwgh0p" path="res://objects/YOYO 1.gltf" id="2_i35rt"]
+
+[node name="YoyoEquipped" type="Node3D" unique_id=1449265619]
+script = ExtResource("1_usw18")
+
+[node name="Marker3D" type="Marker3D" parent="." unique_id=1221087416]
+
+[node name="blockbench_export" parent="." unique_id=30591325 instance=ExtResource("2_i35rt")]
