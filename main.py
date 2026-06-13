@@ -1,3 +1,4 @@
+import math
 import os
 import pygame
 import random 
@@ -5,7 +6,9 @@ import random
 pygame.init()
 HEIGHT = 600
 WIDTH = 800
-SIZE = 30
+SIZE = 40
+PLAYER_HITBOX_PADDING = 8
+PLAYER_HITBOX_SIZE = SIZE - PLAYER_HITBOX_PADDING
 ASSET_DIR = os.path.join(os.path.dirname(__file__), "Images")
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -21,14 +24,16 @@ def load_image(name):
         raise exc
 
 # Use only cactus_1 for all obstacle rendering.
-cactus_image = load_image("Cactus_YF1.png")
+player_images = [pygame.transform.smoothscale(load_image("Cactus_YF1.png"), (SIZE, SIZE)),
+                 pygame.transform.smoothscale(load_image("Cactus_YF0.png"), (SIZE, SIZE)),
+                 pygame.transform.smoothscale(load_image("Cactus_YF2.png"), (SIZE, SIZE)),
+                 pygame.transform.smoothscale(load_image("Cactus_YF3.png"), (SIZE, SIZE)),]
 # Animate the yoyo using the two frame images.
 yoyo_frames = [
-    pygame.transform.smoothscale(load_image("yoyo_YF0.png"), (SIZE//2, SIZE//2)),
-    pygame.transform.smoothscale(load_image("yoyo_YF1.png"), (SIZE//2, SIZE//2)),
+    pygame.transform.smoothscale(load_image("yoyo_YF0.png"), (int(SIZE*0.4), int(SIZE*0.4))),
+    pygame.transform.smoothscale(load_image("yoyo_YF1.png"), (int(SIZE*0.4), int(SIZE*0.4))),
 ]
-# Player sprite (scaled to SIZE)
-player_image = pygame.transform.smoothscale(cactus_image, (SIZE, SIZE))
+
 
 # Colors
 WHITE = (255, 255, 255)
@@ -134,14 +139,19 @@ class Obstacles:
             placed += 1
             
     def check_collision(self, player):
-        player_rect = pygame.Rect(int(player.x - SIZE//2), int(player.y - SIZE//2), SIZE, SIZE)
+        player_rect = pygame.Rect(
+            int(player.x - PLAYER_HITBOX_SIZE//2),
+            int(player.y - PLAYER_HITBOX_SIZE//2),
+            PLAYER_HITBOX_SIZE,
+            PLAYER_HITBOX_SIZE,
+        )
         for obs in self.obstacles:
             if player_rect.colliderect(obs):
                 return True
         return False
     
     def check_yoyo_collision(self, yoyo):
-        yoyo_rect = pygame.Rect(int(yoyo.x - 10), int(yoyo.y - 10), 20, 20)
+        yoyo_rect = yoyo.yoyo_rect()
         for obs in self.obstacles:
             if yoyo_rect.colliderect(obs):
                 return True
@@ -156,15 +166,95 @@ class Yoyo:
         self.owner = owner
         self.x = owner.x
         self.y = owner.y
-        self.speed = 420
-        self.return_speed = 520
+        self.radius = 10
+        self.base_speed = 420.0
+        self.base_return_speed = 520.0
+        self.speed = self.base_speed
+        self.return_speed = self.base_return_speed
         self.direction = (0.0, 0.0)
         self.state = "attached"
         self.max_range = 280
         self.travel_distance = 0.0
+        self.bounce_count = 0
+        self.max_bounces = 8
+        self.bounce_friction = 0.78
+        self.min_speed = 220.0
+        self.min_return_speed = 260.0
         self.animation_timer = 0.0
         self.animation_frame = 0
         self.animation_speed = 0.15
+
+    def yoyo_rect(self):
+        return pygame.Rect(int(self.x - self.radius), int(self.y - self.radius), self.radius * 2, self.radius * 2)
+
+    def _apply_bounce_friction(self):
+        self.bounce_count += 1
+        self.speed = max(self.min_speed, self.speed * self.bounce_friction)
+        self.return_speed = max(self.min_return_speed, self.return_speed * self.bounce_friction)
+
+    def break_string(self):
+        self.state = "broken"
+        self.direction = (0.0, 0.0)
+
+    def _apply_motion(self, vel_x, vel_y, speed, dt):
+        prev_x = self.x
+        prev_y = self.y
+        self.x += vel_x
+        self.y += vel_y
+        bounced = False
+
+        # Bounce off screen bounds first
+        if self.x < self.radius:
+            self.x = self.radius
+            self.direction = (-self.direction[0], self.direction[1])
+            bounced = True
+        elif self.x > WIDTH - self.radius:
+            self.x = WIDTH - self.radius
+            self.direction = (-self.direction[0], self.direction[1])
+            bounced = True
+        if self.y < self.radius:
+            self.y = self.radius
+            self.direction = (self.direction[0], -self.direction[1])
+            bounced = True
+        elif self.y > HEIGHT - self.radius:
+            self.y = HEIGHT - self.radius
+            self.direction = (self.direction[0], -self.direction[1])
+            bounced = True
+
+        if obstacles.check_yoyo_collision(self):
+            self.x = prev_x
+            self.y = prev_y
+            x_collided = False
+            y_collided = False
+
+            self.x = prev_x + vel_x
+            self.y = prev_y
+            if obstacles.check_yoyo_collision(self):
+                self.x = prev_x
+                self.direction = (-self.direction[0], self.direction[1])
+                x_collided = True
+
+            self.x = prev_x
+            self.y = prev_y + vel_y
+            if obstacles.check_yoyo_collision(self):
+                self.y = prev_y
+                self.direction = (self.direction[0], -self.direction[1])
+                y_collided = True
+
+            if not (x_collided or y_collided):
+                self.direction = (-self.direction[0], -self.direction[1])
+
+            self.x = prev_x + self.direction[0] * speed * dt
+            self.y = prev_y + self.direction[1] * speed * dt
+            bounced = True
+
+            self.x = max(self.radius, min(self.x, WIDTH - self.radius))
+            self.y = max(self.radius, min(self.y, HEIGHT - self.radius))
+
+        if bounced:
+            self._apply_bounce_friction()
+
+        return bounced
 
     def attach(self):
         self.state = "attached"
@@ -172,10 +262,27 @@ class Yoyo:
         self.travel_distance = 0.0
         self.x = self.owner.x
         self.y = self.owner.y
+        self.speed = self.base_speed
+        self.return_speed = self.base_return_speed
+        self.bounce_count = 0
+        self.break_timer = 0.0
 
     def recall(self):
         if self.state == "outbound":
             self.state = "recalled"
+            dx = self.owner.x - self.x
+            dy = self.owner.y - self.y
+            dist = math.hypot(dx, dy)
+            if dist > 0.0:
+                self.direction = (dx / dist, dy / dist)
+
+    def _start_return(self):
+        self.state = "returning"
+        dx = self.owner.x - self.x
+        dy = self.owner.y - self.y
+        dist = math.hypot(dx, dy)
+        if dist > 0.0:
+            self.direction = (dx / dist, dy / dist)
 
     def throw(self, direction_x, direction_y):
         if self.state != "attached":
@@ -185,79 +292,67 @@ class Yoyo:
             self.direction = (direction_x / mag, direction_y / mag)
             self.state = "outbound"
             self.travel_distance = 0.0
+            self.bounce_count = 0
+            self.speed = self.base_speed
+            self.return_speed = self.base_return_speed
             self.x = self.owner.x
             self.y = self.owner.y
-
+    def check_collision_with_owner(self):
+        if self.state in ("broken"):
+            if math.hypot(self.owner.x - self.x, self.owner.y - self.y) <= self.radius + SIZE//2:
+                self.attach() 
+                return True
+        return False       
+    
     def update(self, dt):
         if self.state == "attached":
             self.x = self.owner.x
             self.y = self.owner.y
             return
 
+        if self.state == "broken":
+            checked = self.check_collision_with_owner()
+            if checked:
+                return
+            else:
+                return
+            
+
         if self.state == "outbound":
-            prev_x = self.x
-            prev_y = self.y
             vel_x = self.direction[0] * self.speed * dt
             vel_y = self.direction[1] * self.speed * dt
-            self.x += vel_x
-            self.y += vel_y
-            self.travel_distance += (vel_x ** 2 + vel_y ** 2) ** 0.5
-
-            # Bounce off the screen bounds.
-            radius = 10
-            bounced = False
-            if self.x < radius:
-                self.x = radius
-                self.direction = (-self.direction[0], self.direction[1])
-                bounced = True
-            elif self.x > WIDTH - radius:
-                self.x = WIDTH - radius
-                self.direction = (-self.direction[0], self.direction[1])
-                bounced = True
-            if self.y < radius:
-                self.y = radius
-                self.direction = (self.direction[0], -self.direction[1])
-                bounced = True
-            elif self.y > HEIGHT - radius:
-                self.y = HEIGHT - radius
-                self.direction = (self.direction[0], -self.direction[1])
-                bounced = True
-
-            # Bounce from obstacles if the yoyo hits them.
-            if obstacles.check_yoyo_collision(self):
-                # Restore previous position and reflect on the collision axis.
-                self.x = prev_x
-                self.y = prev_y
-                if abs(vel_x) > abs(vel_y):
-                    self.direction = (-self.direction[0], self.direction[1])
-                else:
-                    self.direction = (self.direction[0], -self.direction[1])
-                bounced = True
-                self.x += self.direction[0] * self.speed * dt
-                self.y += self.direction[1] * self.speed * dt
+            self.travel_distance += math.hypot(vel_x, vel_y)
+            self._apply_motion(vel_x, vel_y, self.speed, dt)
 
             if self.travel_distance >= self.max_range:
-                self.state = "returning"
+                self._start_return()
 
         if self.state == "returning" or self.state == "recalled":
+            if self.state == "recalled":
+                self.state = "returning"
             dx = self.owner.x - self.x
             dy = self.owner.y - self.y
-            dist = (dx * dx + dy * dy) ** 0.5
+            dist = math.hypot(dx, dy)
             if dist <= 8.0:
                 self.attach()
                 return
-            direction_x = dx / dist
-            direction_y = dy / dist
-            move_x = direction_x * self.return_speed * dt
-            move_y = direction_y * self.return_speed * dt
-            if (move_x ** 2 + move_y ** 2) ** 0.5 >= dist:
+
+            self.direction = (dx / dist, dy / dist)
+
+            vel_x = self.direction[0] * self.return_speed * dt
+            vel_y = self.direction[1] * self.return_speed * dt
+            move_len = math.hypot(vel_x, vel_y)
+
+            if move_len >= dist:
                 self.attach()
             else:
-                self.x += move_x
-                self.y += move_y
+                self._apply_motion(vel_x, vel_y, self.return_speed, dt)
+                if self.bounce_count >= self.max_bounces:
+                    self.break_string()
+                    return
 
-        self.x = max(0, min(self.x, WIDTH))
-        self.y = max(0, min(self.y, HEIGHT))
+        self.x = max(self.radius, min(self.x, WIDTH - self.radius))
+        self.y = max(self.radius, min(self.y, HEIGHT - self.radius))
 
         self.animation_timer += dt
         if self.animation_timer >= self.animation_speed:
@@ -265,14 +360,14 @@ class Yoyo:
             self.animation_frame = (self.animation_frame + 1) % len(yoyo_frames)
 
     def draw(self, surface):
-        if self.state != "attached":
+        if self.state not in ("attached", "broken"):
             pygame.draw.line(surface, WHITE, (int(self.owner.x), int(self.owner.y)), (int(self.x), int(self.y)), 2)
         frame = yoyo_frames[self.animation_frame]
         frame_rect = frame.get_rect(center=(int(self.x), int(self.y)))
         surface.blit(frame, frame_rect)
 
 class Controls:
-    DEADZONE = 0.15
+    DEADZONE = 0.17
     PREVIEW_THRESHOLD = 0.18
     BUTTON_NAMES = {
         0: "A",
@@ -471,13 +566,17 @@ while running:
 
     screen.fill(BLACK)
     obstacles.draw(screen)
-    # Draw player as cactus sprite
-    player_rect = player_image.get_rect(center=(int(player.x), int(player.y)))
-    screen.blit(player_image, player_rect)
 
     if controls.wants_preview() and yoyo.state == "attached":
         preview_x, preview_y = controls.aim_point(player.x, player.y, 40)
         pygame.draw.circle(screen, (255, 255, 0), (int(preview_x), int(preview_y)), 14, 3)
+        # Draw player as cactus sprite
+        player_rect = player_images[1].get_rect(center=(int(player.x), int(player.y)))
+        screen.blit(player_images[1], player_rect)
+    else:
+        # Draw player as cactus sprite
+        player_rect = player_images[0].get_rect(center=(int(player.x), int(player.y)))
+        screen.blit(player_images[0], player_rect)
 
     yoyo.draw(screen)
     pygame.display.flip()
