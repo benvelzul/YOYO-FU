@@ -1,0 +1,45 @@
+[gd_scene format=3 uid="uid://dacd5xa0ms4l0"]
+
+[node name="Control" type="Control" unique_id=1086042959]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="QuitBTN" type="Button" parent="." unique_id=592828956]
+layout_mode = 0
+offset_left = 808.0
+offset_top = 440.0
+offset_right = 960.0
+offset_bottom = 531.0
+theme_override_font_sizes/font_size = 60
+text = "QUIT"
+
+[node name="OptionsBTN" type="Button" parent="." unique_id=866871578]
+layout_mode = 0
+offset_left = 808.0
+offset_top = 200.0
+offset_right = 1080.0
+offset_bottom = 291.0
+theme_override_font_sizes/font_size = 60
+text = "OPTIONS"
+
+[node name="CreditsBTN" type="Button" parent="." unique_id=1221606046]
+layout_mode = 0
+offset_left = 808.0
+offset_top = 320.0
+offset_right = 1055.0
+offset_bottom = 411.0
+theme_override_font_sizes/font_size = 60
+text = "CREDITS"
+
+[node name="StartBTN" type="Button" parent="." unique_id=522650795]
+layout_mode = 0
+offset_left = 808.0
+offset_top = 72.0
+offset_right = 995.0
+offset_bottom = 163.0
+theme_override_font_sizes/font_size = 60
+text = "START"

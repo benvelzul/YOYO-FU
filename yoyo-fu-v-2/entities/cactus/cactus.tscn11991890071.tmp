@@ -1,0 +1,82 @@
+[gd_scene format=3 uid="uid://b3u6mur3y76c2"]
+
+[ext_resource type="PackedScene" uid="uid://bwtv2xbkgfgw3" path="res://entities/cactus/Cactus v3.gltf" id="1_dupj8"]
+
+[sub_resource type="GDScript" id="GDScript_euqdb"]
+script/source = "extends CharacterBody3D
+
+const SPEED = 5.0
+const DASH_SPEED = 30.0
+const JUMP_VEL = 2.0
+const ROTATION_SPEED = 20.0 
+
+# Track dash state across frames
+var is_dashing: bool = false
+var dash_timer: float = 0.0
+const DASH_DURATION = 0.15 # How long the dash burst lasts in seconds
+
+func _physics_process(delta: float) -> void:
+	# Add the gravity.
+	if not is_on_floor():
+		velocity += get_gravity() * delta
+		
+	# Get input direction
+	var input_dir := Input.get_vector(\"ui_left\", \"ui_right\", \"ui_up\", \"ui_down\")
+	var direction := Vector3(input_dir.x, 0, input_dir.y).normalized()
+	
+	# Handle Dash/Jump Trigger
+	if Input.is_action_just_pressed(\"ui_accept\") and is_on_floor() and not is_dashing:
+		is_dashing = true
+		dash_timer = DASH_DURATION
+		velocity.y = JUMP_VEL
+		
+		# If standing still, dash forward wherever the player is currently facing
+		if direction == Vector3.ZERO:
+			var forward = -global_transform.basis.z
+			velocity.x = forward.x * DASH_SPEED
+			velocity.z = forward.z * DASH_SPEED
+	
+	# Manage active dash timing
+	if is_dashing:
+		dash_timer -= delta
+		if dash_timer <= 0:
+			is_dashing = false
+
+	# Movement Execution
+	if is_dashing:
+		# If they change directions mid-dash, let them control it slightly, 
+		# or leave this if you want a locked straight-line dash!
+		if direction != Vector3.ZERO:
+			velocity.x = direction.x * DASH_SPEED
+			velocity.z = direction.z * DASH_SPEED
+	elif direction != Vector3.ZERO:
+		velocity.x = direction.x * SPEED
+		velocity.z = direction.z * SPEED
+	else:
+		velocity.x = move_toward(velocity.x, 0, SPEED)
+		velocity.z = move_toward(velocity.z, 0, SPEED)
+
+	# Rotation Logic (Now runs independently of movement so it always works)
+	if direction != Vector3.ZERO:
+		var target_angle := atan2(-direction.x, -direction.z)
+		rotation.y = lerp_angle(rotation.y, target_angle, ROTATION_SPEED * delta)
+		
+	move_and_slide()
+"
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_dupj8"]
+size = Vector3(1, 1.8108063, 1)
+
+[node name="Player" type="CharacterBody3D" unique_id=186397825]
+script = SubResource("GDScript_euqdb")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=307839221]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0670726, 0)
+shape = SubResource("BoxShape3D_dupj8")
+debug_color = Color(0, 0.6025294, 0.6872029, 0.41960785)
+debug_fill = false
+
+[node name="CharacterBody3D" type="CharacterBody3D" parent="." unique_id=192020048]
+
+[node name="blockbench_export" parent="." unique_id=1133520753 instance=ExtResource("1_dupj8")]
+transform = Transform3D(-0.010419462, 0, -0.9999457, 0, 1, 0, 0.9999457, 0, -0.010419462, 0, 0.15769792, 0)

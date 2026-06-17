@@ -1,0 +1,29 @@
+[gd_scene format=3 uid="uid://fvq75ad5fcm2"]
+
+[ext_resource type="PackedScene" uid="uid://c5kco8gqwgh0p" path="res://items/weapons/yoyo/YOYO 1.gltf" id="1_x7le6"]
+[ext_resource type="Script" uid="uid://d2qfkr461rv4v" path="res://items/weapons/yoyo/yoyo_projectile.gd" id="1_yi55m"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_yi55m"]
+height = 0.54418945
+radius = 0.6591797
+
+[node name="YoyoProjectile" type="Area3D" unique_id=2062587897]
+script = ExtResource("1_yi55m")
+
+[node name="GPUParticles3D" type="GPUParticles3D" parent="." unique_id=208785797]
+transform = Transform3D(0.18274698, 0, 0, 0, 0.17782849, 0, 0, 0, 0.4144901, 0, 0, 0.99247503)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=495274036]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.23474121, 0)
+shape = SubResource("CylinderShape3D_yi55m")
+
+[node name="Visuals" type="Node3D" parent="." unique_id=6324963]
+
+[node name="blockbench_export" parent="Visuals" unique_id=30591325 instance=ExtResource("1_x7le6")]
+
+[node name="StringVisuals" type="Node3D" parent="." unique_id=1563653129]
+
+[node name="Line2D" type="Line2D" parent="StringVisuals" unique_id=1217390266]
+points = PackedVector2Array(-2, 0, 505, 1)
+
+[node name="Timer" type="Timer" parent="." unique_id=2093181061]
