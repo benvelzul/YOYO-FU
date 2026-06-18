@@ -8,8 +8,10 @@
 
 - [About the Project](#about-the-project)
 - [Features](#features)
+- [Controls](#controls)
 - [Built With](#built-with)
 - [Roadmap](#roadmap)
+- [Contributing](#contributing)
 
 ---
 
@@ -29,6 +31,8 @@ The victim can also be eliminated through pushes until it falls into the void, o
 * **Tricks System:** Collect **Books** scattered across the arena to unlock specialized yoyo techniques and moves to have more ways to trap and attack your opponents.
 * **Power-ups:** Grab **Orbs** to imbue your yoyo with game-changing active and passive abilities.
 * **Hazardous Arenas:** Fight on dynamic stages where the environment (voids, water) is just as dangerous as the players, there are also moving arenas where you will have to donge crushing wall while fighting with your opponents.
+
+---
 
 ## Controls
 
