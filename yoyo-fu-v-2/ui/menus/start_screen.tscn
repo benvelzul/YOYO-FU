@@ -1,45 +1,74 @@
 [gd_scene format=3 uid="uid://dacd5xa0ms4l0"]
 
-[node name="Control" type="Control" unique_id=1086042959]
+[ext_resource type="Script" uid="uid://bhfljy2u41gno" path="res://ui/menus/start_screen.gd" id="1_636ql"]
+[ext_resource type="Texture2D" uid="uid://csir1kk58q35i" path="res://assets/images/4840e9fe-1b55-47fd-8b3f-ef5ee7f1ba35.jpg" id="2_kovee"]
+[ext_resource type="Texture2D" uid="uid://b2rq5175knef6" path="res://assets/images/logo 1 - yoyo fu.png" id="3_sfkug"]
+
+[node name="MainMenu" type="Control" unique_id=1086042959]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("1_636ql")
 
-[node name="QuitBTN" type="Button" parent="." unique_id=592828956]
+[node name="BG" type="Sprite2D" parent="." unique_id=1828182530]
+position = Vector2(576, 323.99997)
+scale = Vector2(1.3846153, 1.4464285)
+texture = ExtResource("2_kovee")
+
+[node name="Logo1YoyoFu" type="Sprite2D" parent="." unique_id=296083625]
+position = Vector2(400, 296.00003)
+scale = Vector2(1.4225225, 1.3421053)
+texture = ExtResource("3_sfkug")
+offset = Vector2(1, 1)
+
+[node name="MadeBy" type="Label" parent="." unique_id=1828599128]
 layout_mode = 0
-offset_left = 808.0
-offset_top = 440.0
-offset_right = 960.0
-offset_bottom = 531.0
+offset_left = 152.0
+offset_top = 600.0
+offset_right = 424.0
+offset_bottom = 624.0
+text = "Made By: Benjamin Velez Zuluaga"
+
+[node name="Version" type="Label" parent="." unique_id=1529234201]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 600.0
+offset_right = 96.0
+offset_bottom = 624.0
+text = "v 2.3.2"
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=516901213]
+layout_mode = 0
+offset_left = 800.0
+offset_top = 152.0
+offset_right = 1112.0
+offset_bottom = 536.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=536291396]
+layout_mode = 2
+
+[node name="StartBTN" type="Button" parent="MarginContainer/VBoxContainer" unique_id=522650795]
+layout_mode = 2
 theme_override_font_sizes/font_size = 60
-text = "QUIT"
+text = "START"
 
-[node name="OptionsBTN" type="Button" parent="." unique_id=866871578]
-layout_mode = 0
-offset_left = 808.0
-offset_top = 200.0
-offset_right = 1080.0
-offset_bottom = 291.0
-theme_override_font_sizes/font_size = 60
-text = "OPTIONS"
-
-[node name="CreditsBTN" type="Button" parent="." unique_id=1221606046]
-layout_mode = 0
-offset_left = 808.0
-offset_top = 320.0
-offset_right = 1055.0
-offset_bottom = 411.0
+[node name="CreditsBTN" type="Button" parent="MarginContainer/VBoxContainer" unique_id=1221606046]
+layout_mode = 2
 theme_override_font_sizes/font_size = 60
 text = "CREDITS"
 
-[node name="StartBTN" type="Button" parent="." unique_id=522650795]
-layout_mode = 0
-offset_left = 808.0
-offset_top = 72.0
-offset_right = 995.0
-offset_bottom = 163.0
+[node name="OptionsBTN" type="Button" parent="MarginContainer/VBoxContainer" unique_id=866871578]
+layout_mode = 2
 theme_override_font_sizes/font_size = 60
-text = "START"
+text = "OPTIONS"
+
+[node name="QuitBTN" type="Button" parent="MarginContainer/VBoxContainer" unique_id=592828956]
+layout_mode = 2
+theme_override_font_sizes/font_size = 60
+text = "QUIT"
+
+[connection signal="pressed" from="MarginContainer/VBoxContainer/StartBTN" to="." method="_on_start_btn_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/QuitBTN" to="." method="_on_quit_btn_pressed"]

@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="YOYO FU V2"
-run/main_scene="uid://d2o3ckqpw25d1"
+run/main_scene="uid://dacd5xa0ms4l0"
 config/features=PackedStringArray("4.6", "Forward Plus")
 
 [physics]
